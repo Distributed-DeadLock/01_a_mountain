@@ -1,0 +1,5 @@
+#X coordinate of the center of the Mountain
+01_a_mountain.x (X Coord) int 0
+
+#Z coordinate of the center of the Mountain
+01_a_mountain.z (Z Coord) int 0
