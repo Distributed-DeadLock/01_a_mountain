@@ -36,10 +36,10 @@ local chunksizeinnodes = minetest.setting_get("chunksize") * 16
 
 minetest.register_on_generated(function(minp, maxp, seed)
 	-- if the chunk does not contain a x ,y & z position the mountain should be at, exit and do nothing.
-	if (math.abs(math.floor(math.abs((minp.x + maxp.x) / 2) - mountain_base_x)) >= (mountain_base_xdim + 39)) then
+	if (math.abs(math.floor(math.abs((minp.x + maxp.x) / 2) - math.abs(mountain_base_x))) >= (mountain_base_xdim + 100)) then
 		return
 	end	
-	if (math.abs(math.floor(math.abs((minp.z + maxp.z) / 2) - mountain_base_z)) >= (mountain_base_zdim + 39)) then
+	if (math.abs(math.floor(math.abs((minp.z + maxp.z) / 2) - math.abs(mountain_base_z))) >= (mountain_base_zdim + 100)) then
 		return
 	end	
 	if ( (minp.y > 1000) or (maxp.y < -100) ) then
