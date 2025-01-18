@@ -22,6 +22,8 @@ Once the mountain has been fully generated, the mod can be safely romoved again.
 
 -----
 
-License: Code: MIT
-Mod dependencies: default
-Author: DeadLock
+**License**: MIT
+
+**Mod dependencies**: default
+
+**Author**: DeadLock
