@@ -15,7 +15,7 @@ The Position of the mountain can be configured in the settings.
 
 No new blocks/items or functions are added with this mod.
 
-Once the mountain has been fully generated, the mod can be safely romoved again.
+Once the mountain has been fully generated, the mod can be safely removed again.
 
 -----
 
