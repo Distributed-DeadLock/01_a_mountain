@@ -19,6 +19,13 @@ Once the mountain has been fully generated, the mod can be safely removed again.
 
 -----
 
+The mountain will be build in every game, but only from "mapgen_stone".
+
+Only Minetest_Game and VoxelLibre will produce the mountain with all features.
+
+-----
+
+
 The dafault ore distribution is used to generate ores in the mountain. 
 
 With an unmodified Minetest-basegame, this results in almost no ores in the mountain.
