@@ -29,6 +29,6 @@ To change this, edit "\games\minetest_game\mods\default\mapgen.lua".
 
 **License**: MIT
 
-**Mod dependencies**: default
+**Optional Mod dependencies**: default, mcl_core
 
 **Author**: DeadLock

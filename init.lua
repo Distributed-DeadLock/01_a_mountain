@@ -5,8 +5,8 @@
 -- ----------------------------------------------------------------------------
 -- Config Section ---
 
-local mountain_base_x = tonumber(core.setting_get("01_a_mountain.x")) or 0
-local mountain_base_z = tonumber(core.setting_get("01_a_mountain.z")) or 0
+local mountain_base_x = tonumber(core.setting_get("01_a_mountain.x")) or 1000
+local mountain_base_z = tonumber(core.setting_get("01_a_mountain.z")) or 2000
 
 local mountain_base_xdim = 1000
 local mountain_base_zdim = 2000
@@ -65,12 +65,19 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local data = voxman_o:get_data()
 
 	-- ged ids for blocks
-	local c_stone = core.get_content_id("default:stone")
+	local c_stone = core.get_content_id("mapgen_stone")
 	local c_air = core.get_content_id("air")
-	local c_water = core.get_content_id("default:water_source")
-	local c_ice = core.get_content_id("default:ice")
-	local c_snow = core.get_content_id("default:snowblock")
-	
+	local c_water = core.get_content_id("mapgen_water_source")	
+	local c_ice = core.get_content_id("mapgen_stone")
+	local c_snow = core.get_content_id("mapgen_stone")
+	if (core.get_modpath("default")) then
+		c_ice = core.get_content_id("default:ice")
+		c_snow = core.get_content_id("default:snowblock")
+	end
+	if (core.get_modpath("mcl_core")) then
+		c_ice = core.get_content_id("mcl_core:ice")
+		c_snow = core.get_content_id("mcl_core:snowblock")
+	end
 
 	local perlin_map = perlin_map_object:get_2d_map_flat({x=minp.x, y=minp.z})
 
