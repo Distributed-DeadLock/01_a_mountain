@@ -3,3 +3,6 @@
 
 #Z coordinate of the center of the Mountain
 01_a_mountain.z (Z Coord) int 2000
+
+#Base Multiplier for Ore Generation (0-15). Higher Number = More Ore
+01_a_mountain.orefactor (Ore Factor) int 7 0 15

@@ -24,8 +24,9 @@ Once the mountain has been fully generated, the mod can be safely removed again.
 -----
 
 Ores in the mountain are generated with both the default ore generator and a mod-specific generator as well. 
-The mod specific generator uses all ores that are registered by the game to spawn above y: -1000. 
-At max 0.05 % of the "mapgen_stone"-blocks will be transformed to ores.
+The mod specific generator uses all ores that are registered by the game to spawn above y: -1000 as type "scatter". 
+Only the "mapgen_stone"-blocks will be transformed to ores, you can adjust the amount of ore-spawning in the settings (with values 0 - 15)
+
 -----
 
 **License**: MIT

@@ -8,6 +8,8 @@
 local mountain_base_x = tonumber(core.setting_get("01_a_mountain.x")) or 1000
 local mountain_base_z = tonumber(core.setting_get("01_a_mountain.z")) or 2000
 
+local mountain_orefactor = tonumber(core.setting_get("01_a_mountain.orefactor")) or 9
+
 local mountain_base_xdim = 1000
 local mountain_base_zdim = 2000
 
@@ -15,7 +17,6 @@ local mountain_base_zdim = 2000
 local chunksizeinnodes = minetest.setting_get("chunksize") * 16
 
 local nodedata = {}
---nodedata.random = PcgRandom(42)
 
 	-- make some (perlin-) noise ;-)
 	local noiseparams = {
@@ -64,8 +65,6 @@ local addnodes = function()
 end
 
 core.register_on_mods_loaded(addnodes)
-
-
 
 
 minetest.register_on_generated(function(minp, maxp, seed)
@@ -183,7 +182,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local ri
 	local rimax = chunksizeinnodes * chunksizeinnodes * chunksizeinnodes
 	local rore
-	for i=1,2560 do
+	for i=1,(256 * mountain_orefactor) do
 		ri = math.random(1,rimax)
 		if (data[ri] == c_stone) then
 			rore = math.random(1, nodedata.orenr)
