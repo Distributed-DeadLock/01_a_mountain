@@ -14,7 +14,8 @@ local mountain_base_zdim = 2000
 -- get the size of chunks to be generated at once by mapgen, stated in nodes
 local chunksizeinnodes = minetest.setting_get("chunksize") * 16
 
-
+local nodedata = {}
+--nodedata.random = PcgRandom(42)
 
 	-- make some (perlin-) noise ;-)
 	local noiseparams = {
@@ -33,6 +34,39 @@ local chunksizeinnodes = minetest.setting_get("chunksize") * 16
 		z = 80,
 	}
 	local perlin_map_object = PerlinNoiseMap(noiseparams, size_v)
+
+local addnodes = function()
+	-- get base nodes
+	nodedata.c_stone = core.get_content_id("mapgen_stone")
+	nodedata.c_snow = core.get_content_id("mapgen_snowblock") or core.get_content_id("mapgen_stone")
+	nodedata.c_air = core.get_content_id("air")
+	nodedata.c_water = core.get_content_id("mapgen_water_source")	
+	nodedata.c_ice = core.get_content_id("mapgen_ice") or core.get_content_id("mapgen_stone")
+	nodedata.c_lava = core.get_content_id("mapgen_lava_source")
+	-- add ores 
+	local orelist = {}
+	for _, item in pairs(minetest.registered_ores) do
+		if (item.ore_type == "scatter") and (item.y_max >= -1000) then
+			if not((core.get_content_id(item.ore) == nodedata.c_lava) or (core.get_content_id(item.ore) == nodedata.c_water)) then
+				if not (string.find(item.ore, "lava") or string.find(item.ore, "water") or string.find(item.ore, "default:mese")) then
+					orelist[item.ore] = true
+				end
+			end
+		end
+	end
+	nodedata.orelist = {}
+	local orenr = 0
+	for k,v in pairs(orelist) do
+		table.insert(nodedata.orelist, core.get_content_id(k))
+		orenr = orenr + 1
+	end
+	nodedata.orenr = orenr
+end
+
+core.register_on_mods_loaded(addnodes)
+
+
+
 
 minetest.register_on_generated(function(minp, maxp, seed)
 	-- if the chunk does not contain a x ,y & z position the mountain should be at, exit and do nothing.
@@ -65,22 +99,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local data = voxman_o:get_data()
 
 	-- ged ids for blocks
-	local c_stone = core.get_content_id("mapgen_stone")
-	local c_air = core.get_content_id("air")
-	local c_water = core.get_content_id("mapgen_water_source")	
-	local c_ice = core.get_content_id("mapgen_stone")
-	local c_snow = core.get_content_id("mapgen_stone")
-	if (core.get_modpath("default")) then
-		c_ice = core.get_content_id("default:ice")
-		c_snow = core.get_content_id("default:snowblock")
-	end
-	if (core.get_modpath("mcl_core")) then
-		c_ice = core.get_content_id("mcl_core:ice")
-		c_snow = core.get_content_id("mcl_core:snowblock")
-	end
+	local c_stone = nodedata.c_stone
+	local c_air = nodedata.c_air
+	local c_water = nodedata.c_water
+	local c_ice = nodedata.c_ice
+	local c_snow = nodedata.c_snow
 
 	local perlin_map = perlin_map_object:get_2d_map_flat({x=minp.x, y=minp.z})
-
 	
 	-- loop the mapchunk
 	for z = minp.z, maxp.z do
@@ -152,6 +177,17 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 				end
 			end
+		end
+	end
+	-- sprinkle in some ores from nodedata.orelist
+	local ri
+	local rimax = chunksizeinnodes * chunksizeinnodes * chunksizeinnodes
+	local rore
+	for i=1,2560 do
+		ri = math.random(1,rimax)
+		if (data[ri] == c_stone) then
+			rore = math.random(1, nodedata.orenr)
+			data[ri] = nodedata.orelist[rore]
 		end
 	end
 	

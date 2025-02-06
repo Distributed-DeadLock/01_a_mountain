@@ -15,27 +15,19 @@ The Position of the mountain can be configured in the settings.
 
 No new blocks/items or functions are added with this mod.
 
+The mountains base materials are "mapgen_stone", "mapgen_water_source", "mapgen_snowblock" & "mapgen_ice".
+
+Biome defined materials are used if available.
+
 Once the mountain has been fully generated, the mod can be safely removed again.
 
 -----
 
-The mountain will be build in every game, but only from "mapgen_stone".
-
-Only Minetest_Game and VoxelLibre will produce the mountain with all features.
-
------
-
-
-The dafault ore distribution is used to generate ores in the mountain. 
-
-With an unmodified Minetest-basegame, this results in almost no ores in the mountain.
-
-To change this, edit "\games\minetest_game\mods\default\mapgen.lua".
-
+Ores in the mountain are generated with both the default ore generator and a mod-specific generator as well. 
+The mod specific generator uses all ores that are registered by the game to spawn above y: -1000. 
+At max 0.05 % of the "mapgen_stone"-blocks will be transformed to ores.
 -----
 
 **License**: MIT
-
-**Optional Mod dependencies**: default, mcl_core
 
 **Author**: DeadLock
