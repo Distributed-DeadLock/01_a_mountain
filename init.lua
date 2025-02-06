@@ -9,6 +9,7 @@ local mountain_base_x = tonumber(core.setting_get("01_a_mountain.x")) or 1000
 local mountain_base_z = tonumber(core.setting_get("01_a_mountain.z")) or 2000
 
 local mountain_orefactor = tonumber(core.setting_get("01_a_mountain.orefactor")) or 9
+local mountain_above_y = tonumber(core.setting_get("01_a_mountain.above_y")) or -500
 
 local mountain_base_xdim = 1000
 local mountain_base_zdim = 2000
@@ -47,7 +48,7 @@ local addnodes = function()
 	-- add ores 
 	local orelist = {}
 	for _, item in pairs(minetest.registered_ores) do
-		if (item.ore_type == "scatter") and (item.y_max >= -1000) then
+		if (item.ore_type == "scatter") and (item.y_max >= mountain_above_y) then
 			if not((core.get_content_id(item.ore) == nodedata.c_lava) or (core.get_content_id(item.ore) == nodedata.c_water)) then
 				if not (string.find(item.ore, "lava") or string.find(item.ore, "water") or string.find(item.ore, "default:mese")) then
 					orelist[item.ore] = true
