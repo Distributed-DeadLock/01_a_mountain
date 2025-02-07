@@ -15,7 +15,7 @@ local mountain_base_xdim = 1000
 local mountain_base_zdim = 2000
 
 -- get the size of chunks to be generated at once by mapgen, stated in nodes
-local chunksizeinnodes = minetest.setting_get("chunksize") * 16
+local chunksizeinnodes = core.setting_get("chunksize") * 16
 
 local nodedata = {}
 
@@ -47,7 +47,7 @@ local addnodes = function()
 	nodedata.c_lava = core.get_content_id("mapgen_lava_source")
 	-- add ores 
 	local orelist = {}
-	for _, item in pairs(minetest.registered_ores) do
+	for _, item in pairs(core.registered_ores) do
 		if (item.ore_type == "scatter") and (item.y_max >= mountain_above_y) then
 			if not((core.get_content_id(item.ore) == nodedata.c_lava) or (core.get_content_id(item.ore) == nodedata.c_water)) then
 				if not (string.find(item.ore, "lava") or string.find(item.ore, "water") or string.find(item.ore, "default:mese")) then
@@ -68,7 +68,7 @@ end
 core.register_on_mods_loaded(addnodes)
 
 
-minetest.register_on_generated(function(minp, maxp, seed)
+core.register_on_generated(function(minp, maxp, seed)
 	-- if the chunk does not contain a x ,y & z position the mountain should be at, exit and do nothing.
 	
 	if ( math.abs(((minp.x + maxp.x) / 2) - mountain_base_x) >= (mountain_base_xdim + 100) ) then
