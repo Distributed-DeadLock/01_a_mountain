@@ -8,76 +8,68 @@
 local mountain_base_x = tonumber(core.setting_get("01_a_mountain.x")) or 1000
 local mountain_base_z = tonumber(core.setting_get("01_a_mountain.z")) or 2000
 
-local mountain_orefactor = tonumber(core.setting_get("01_a_mountain.orefactor")) or 9
-local mountain_above_y = tonumber(core.setting_get("01_a_mountain.above_y")) or -500
-
 local mountain_base_xdim = 1000
 local mountain_base_zdim = 2000
 
 -- get the size of chunks to be generated at once by mapgen, stated in nodes
 local chunksizeinnodes = core.setting_get("chunksize") * 16
+local mysettings = core.settings
+mysettings:set("01_a_mountain.chunksizeinnodes", chunksizeinnodes)
 
-local nodedata = {}
+local modpath = core.get_modpath("01_a_mountain")
+core.register_mapgen_script(modpath .. "/mapgen.lua")
 
-	-- make some (perlin-) noise ;-)
-	local noiseparams = {
-	offset = 0.0,
-	scale = 1.0,
-	spread = vector.new(10, 9, 15),
-	seed = 0,
-	octaves = 3,
-	persistence = 0.5,
-	lacunarity = 1.9,
-	flags = "defaults",
-}	
-	local size_v = {
-		x = 80,
-		y = 80,
-		z = 80,
-	}
-	local perlin_map_object = PerlinNoiseMap(noiseparams, size_v)
 
-local addnodes = function()
-	-- get base nodes
-	nodedata.c_stone = core.get_content_id("mapgen_stone")
-	nodedata.c_snow = core.get_content_id("mapgen_snowblock") or core.get_content_id("mapgen_stone")
-	nodedata.c_air = core.get_content_id("air")
-	nodedata.c_water = core.get_content_id("mapgen_water_source")	
-	nodedata.c_ice = core.get_content_id("mapgen_ice") or core.get_content_id("mapgen_stone")
-	nodedata.c_lava = core.get_content_id("mapgen_lava_source")
-	-- add ores 
-	local orelist = {}
-	for _, item in pairs(core.registered_ores) do
-		if (item.ore_type == "scatter") and (item.y_max >= mountain_above_y) then
-			if not((core.get_content_id(item.ore) == nodedata.c_lava) or (core.get_content_id(item.ore) == nodedata.c_water)) then
-				if not (string.find(item.ore, "lava") or string.find(item.ore, "water") or string.find(item.ore, "default:mese")) then
-					orelist[item.ore] = true
-				end
-			end
-		end
-	end
-	nodedata.orelist = {}
-	local orenr = 0
-	for k,v in pairs(orelist) do
-		table.insert(nodedata.orelist, core.get_content_id(k))
-		orenr = orenr + 1
-	end
-	nodedata.orenr = orenr
+-- apply game/med specific patches to ore/decoration generation
+local gameinfo = core.get_game_info()
+local y_fix = false
+local y_pretend = 0
+if core.get_modpath("mcl_biomes") then
+y_fix = true
+y_pretend = -90
+end
+if (gameinfo.id == "mineclonia") then
+	mysettings:set("01_a_mountain.skip_decor", 1)
+else
+	mysettings:set("01_a_mountain.skip_decor", 0)
+end
+local do_boostedgen = true
+if (gameinfo.id == "exile") then
+	do_boostedgen = false
 end
 
-core.register_on_mods_loaded(addnodes)
+local liquid_filter = {}
+local c_air
+local function fill_filter()
+	c_air = core.get_content_id("air")
+	liquid_filter.a = core.get_content_id("mapgen_water_source")
+	liquid_filter.b = core.get_content_id("mapgen_water_source")
+	if (core.registered_nodes["mapgen_lava_source"]) then
+		liquid_filter.b = core.get_content_id("mapgen_lava_source")
+	end
+	if (core.registered_nodes["nc_terrain:water_source"]) then
+		liquid_filter.b = core.get_content_id("nc_terrain:water_source")
+	end
+	if (core.registered_nodes["nc_terrain:lava_source"]) then
+		liquid_filter.b = core.get_content_id("nc_terrain:lava_source")
+	end
+	if (core.registered_nodes["mcl_core:lava_source"]) then
+		liquid_filter.b = core.get_content_id("mcl_core:lava_source")
+	end
+	if (liquid_filter.b == c_air) then
+		liquid_filter.b = liquid_filter.a
+	end
+end
 
-
-core.register_on_generated(function(minp, maxp, seed)
-	-- if the chunk does not contain a x ,y & z position the mountain should be at, exit and do nothing.
-	
+local function oregen_mirror(minp, maxp, seed)
+	-- if the chunk does not contain a x ,y & z position the mountain should be at, exit and do nothing.	
 	if ( math.abs(((minp.x + maxp.x) / 2) - mountain_base_x) >= (mountain_base_xdim + 100) ) then
 		return
 	end	
 	if ( math.abs(((minp.z + maxp.z) / 2) - mountain_base_z) >= (mountain_base_zdim + 100) ) then
 		return
 	end	
-	if ( (minp.y > 1000) or (maxp.y < -100) ) then
+	if ( (minp.y > 1000) or (minp.y < 0) ) then
 		return
 	end
 	
@@ -94,112 +86,73 @@ core.register_on_generated(function(minp, maxp, seed)
 		MinEdge = emin,
 		MaxEdge = emax
 	}
-
 	-- load nodes into array
 	local data = voxman_o:get_data()
 
-	-- ged ids for blocks
-	local c_stone = nodedata.c_stone
-	local c_air = nodedata.c_air
-	local c_water = nodedata.c_water
-	local c_ice = nodedata.c_ice
-	local c_snow = nodedata.c_snow
+	-- get the helper voxel manip obj for ore generation
+	local g_minp = minp
+	local g_maxp = maxp
+	local g_height = g_maxp.y - g_minp.y
+	-- adjust the pretend_y value according to hosting game
+	if not y_fix then
+		g_minp.y = (g_minp.y + 400) * -1
+	else
+		g_minp.y = y_pretend
+	end
+	g_maxp.y = (g_minp.y + g_height)
 
-	local perlin_map = perlin_map_object:get_2d_map_flat({x=minp.x, y=minp.z})
-	
-	-- loop the mapchunk
+	local g_voxman_o = VoxelManip(g_minp,g_maxp)
+	local g_data = g_voxman_o:get_data()
+	local g_emin, g_emax = g_voxman_o:get_emerged_area()
+	local g_voxarea = VoxelArea:new{
+		MinEdge = g_emin,
+		MaxEdge = g_emax
+	}
+		
+	-- loop the mapchunk to copy the data
 	for z = minp.z, maxp.z do
 		for y = minp.y, maxp.y do
 			for x = minp.x, maxp.x do
 				-- vi, voxel indexing object 
 				local vi = voxarea:index(x, y, z)
-				
-				-- calc base height of mointain
-				local xw = math.cos(math.abs(x - mountain_base_x)/(math.pi * 200))* 500
-				local xh = math.cos(math.abs(x - mountain_base_x)/(math.pi * 100))* 1000				
-				local xhi = math.max(xw, xh)
-				
-				local zhi = math.cos(math.abs(z - mountain_base_z)/(math.pi * 400))
-								
-				-- get previous height at current test position
-				local hm_i = (x - minp.x + 1) + ((z - minp.z) * chunksizeinnodes)	
-				local hmh = hmap[hm_i]
-
-				-- get distance from center of mountain
-				local dist = math.sqrt(math.pow(x - mountain_base_x, 2) + math.pow((z - mountain_base_z) / 2 , 2))
-				
-				-- decide new height
-				local bh = (xhi * zhi)
-				if (hmh > 0) and (hmh < 100) then 
-					bh = bh + (hmh / 5)
-				end
-				
-				local h = math.max(bh , hmh)
-				
-				if (dist < 500) then
-					h = h + (perlin_map[hm_i] * 7)
-				elseif (dist < 980) then
-					h = h + (perlin_map[hm_i] * 3)
-				elseif (dist < 1200) then
-					h = h + perlin_map[hm_i]
-				end
-				h = math.floor(h)
-
-				local c_topnode = c_stone
-				local c_stonenode = c_stone
-
-				if not (bmap[hm_i] == 0) then
-					local topnode = core.registered_biomes[core.get_biome_name(bmap[hm_i])].node_top
-					if topnode then
-						c_topnode = core.get_content_id(topnode)
-						
-					end
-					local stonenode = core.registered_biomes[core.get_biome_name(bmap[hm_i])].node_stone
-					if stonenode then
-						c_stonenode = core.get_content_id(stonenode)
-					end
-				end
-
-				-- set block for mountain				
-				if (y == h) then
-					if (data[vi] == c_air) or (data[vi] == c_water) then
-						if (y > ((perlin_map[hm_i] * 10) + 600)) then
-							data[vi] = c_snow
-						else
-							data[vi] = c_topnode
-						end
-					end				
-				elseif (y < h) then
-					if (y > ((perlin_map[hm_i] * 10) + 940)) then
-						data[vi] = c_ice
-					else
-						data[vi] = c_stonenode
-					end
-				end
+				local g_vi = g_voxarea:index(x, y, z)
+				g_data[g_vi] = data[vi]
 			end
 		end
 	end
-	-- sprinkle in some ores from nodedata.orelist
-	local ri
-	local rimax = chunksizeinnodes * chunksizeinnodes * chunksizeinnodes
-	local rore
-	for i=1,(256 * mountain_orefactor) do
-		ri = math.random(1,rimax)
-		if (data[ri] == c_stone) then
-			rore = math.random(1, nodedata.orenr)
-			data[ri] = nodedata.orelist[rore]
+	-- write the map data
+	g_voxman_o:set_data(g_data)
+	
+	-- generate ores	
+	core.generate_ores(g_voxman_o)
+	
+	g_data = g_voxman_o:get_data()
+	-- loop the mapchunk to copy the data
+	for z = minp.z, maxp.z do
+		for y = minp.y, maxp.y do
+			for x = minp.x, maxp.x do
+				-- vi, voxel indexing object 
+				local vi = voxarea:index(x, y, z)
+				local g_vi = g_voxarea:index(x, y, z)
+				-- copy, but filter lava & water
+				if ((g_data[g_vi] == liquid_filter.a) or (g_data[g_vi] == liquid_filter.b)) then
+					data[vi] = c_air
+				else
+					data[vi] = g_data[g_vi]
+				end
+			end
 		end
-	end
+	end		
 	
 	-- write the map data
-	voxman_o:set_data(data)
-	
-	core.generate_ores(voxman_o)
-	core.generate_decorations(voxman_o)
-	
-	
+	voxman_o:set_data(data)	
+
+	voxman_o:calc_lighting()
 	voxman_o:write_to_map(true)
-	
-	--print(hmap[1])
-	
-end)
+end
+
+core.register_on_mods_loaded(fill_filter)
+
+if do_boostedgen then
+	core.register_on_generated(oregen_mirror)
+end

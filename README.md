@@ -33,4 +33,4 @@ Only the "mapgen_stone"-blocks will be transformed to ores, you can adjust the a
 
 **Author**: DeadLock
 
-**Credits** NameNotQuality, for Ideas and Feedback on Ore-Generation 
+**Thanks** NameNotQuality, Desour, Blockhead & sfan5	for Help, Ideas and Feedback on Ore-Generation 
