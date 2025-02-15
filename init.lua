@@ -22,17 +22,22 @@ core.register_mapgen_script(modpath .. "/mapgen.lua")
 
 -- apply game/med specific patches to ore/decoration generation
 local gameinfo = core.get_game_info()
-local y_fix = false
+local y_fix = 0
 local y_pretend = 0
 if core.get_modpath("mcl_biomes") then
-y_fix = true
+y_fix = 1
 y_pretend = -90
+end
+if (gameinfo.id == "nodecore") then
+	y_fix = 1
+	y_pretend = -120
 end
 if (gameinfo.id == "mineclonia") then
 	mysettings:set("01_a_mountain.skip_decor", 1)
 else
 	mysettings:set("01_a_mountain.skip_decor", 0)
 end
+
 local do_boostedgen = true
 if (gameinfo.id == "exile") then
 	do_boostedgen = false
@@ -94,10 +99,10 @@ local function oregen_mirror(minp, maxp, seed)
 	local g_maxp = maxp
 	local g_height = g_maxp.y - g_minp.y
 	-- adjust the pretend_y value according to hosting game
-	if not y_fix then
-		g_minp.y = (g_minp.y + 400) * -1
-	else
+	if (y_fix == 1) then
 		g_minp.y = y_pretend
+	else
+		g_minp.y = (g_minp.y + 400) * -1
 	end
 	g_maxp.y = (g_minp.y + g_height)
 
